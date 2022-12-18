@@ -1,55 +1,66 @@
+package finalbarber;
 
-package barberproject;
+import static finalbarber.FinalBarBer.EmptyChair;
+import static finalbarber.FinalBarBer.barber;
+import static finalbarber.FinalBarBer.customers;
+import static finalbarber.FinalBarBer.mutex;
+import static java.lang.Thread.sleep;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.control.ComboBox;
+/**
+ *
+ * @author ME
+ */
+     class Customer extends Thread {
 
+        public int customerID;
+        public int BarberID;
+        boolean needsCut = true;
 
+        public Customer(int id,int bid) {
+            customerID = id;
+            BarberID =bid ;
+        }
 
-public class Customer {
-    private ComboBox barber;
-    int id;
-    String FName,Lname,ph1,ph2;
-    ObservableList List = FXCollections.observableArrayList("barber1","barber2","barber3" , "Wait");
-    
-    
-    public Customer(int id, String FName, String Lname, String ph1, String ph2) {
-        this.id = id;
-        this.FName = FName;
-        this.Lname = Lname;
-        this.ph1 = ph1;
-        this.ph2 = ph2;
-        this.barber = new ComboBox(List);
+        public void run() {
+
+            while (needsCut) {
+                try {
+                    //control the number of Empty chair
+                    mutex.acquire();
+                    if (EmptyChair > 0) {
+                        //customer can enter the shop
+                        System.out.println("Customer " + this.customerID + " wait Barber in Empty Chair");
+                        EmptyChair--;
+                        System.out.println("Now empty Chairs =(" +EmptyChair+")");
+                        mutex.release();
+                       
+                        try {
+                            customers.release();
+                            StartHaircut();
+                            barber.acquire();
+                            System.out.println("Customer " +this.customerID+" exit");
+                            needsCut = false;
+                        } catch (InterruptedException ex) {
+                        }
+                    } else {
+
+                        System.out.println("Empty Chair for Customer (" + this.customerID+") not founded");
+
+                        mutex.release();
+
+                        needsCut = false;
+                    }
+                } catch (InterruptedException ex) {
+                }
+            }
+        }
+
+        public void StartHaircut() {
+            try {
+                System.out.println("Customer ("+this.customerID+") start Cutting with Barber ("+this.BarberID+")");
+                sleep(5050);
+            } catch (InterruptedException ex) {
+            }
+        }
+
     }
-
-    public ComboBox getBarber() {
-        return barber;
-    }
-
-    public void setBarber(ComboBox barber) {
-        this.barber = barber;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public String getFName() {
-        return FName;
-    }
-
-    public String getLname() {
-        return Lname;
-    }
-
-    public String getPh1() {
-        return ph1;
-    }
-
-    public String getPh2() {
-        return ph2;
-    }
-    
-    
-}
